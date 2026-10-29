@@ -227,7 +227,7 @@ export default function MeasureCanvas({
       if (ctx) {
         ctx.canvas.width = window.innerWidth;
         ctx.canvas.height = window.innerHeight;
-        ctx.strokeStyle = "#9333ea";
+        ctx.strokeStyle = "#888";
 
         ctx.lineWidth = 4;
         ctx.clearRect(0, 0, canvas.width, canvas.height);

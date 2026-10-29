@@ -167,8 +167,8 @@ export function drawOverlays(cs: CanvasState) {
 function drawMessage(cs: CanvasState, message: string) {
   const { ctx, width, perspective } = cs;
   ctx.save();
-  ctx.fillStyle = "#9333ea";
-  ctx.font = "48px sans-serif";
+  ctx.fillStyle = strokeColor(cs.displaySettings.theme);
+  ctx.font = '48px "Input Mono", monospace';
   const text = message;
   const textWidth = ctx.measureText(text).width;
   const center = transformPoint(
@@ -185,7 +185,7 @@ function drawMessage(cs: CanvasState, message: string) {
 function drawViewportOutline(cs: CanvasState) {
   const { ctx, calibrationTransform, restoreTransforms } = cs;
   ctx.save();
-  ctx.strokeStyle = "#9333ea";
+  ctx.strokeStyle = strokeColor(cs.displaySettings.theme);
   ctx.lineWidth = 2;
   let corners = transformPoints(
     rectCorners(window.innerWidth, window.innerHeight),

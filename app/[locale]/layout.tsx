@@ -1,12 +1,9 @@
 import "./globals.css";
 
-import { NextIntlClientProvider, useMessages } from "next-intl";
-import { Inter } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
 
-import { GoogleAnalytics } from "@next/third-parties/google";
-
-import type { Metadata } from "next";
-const inter = Inter({ subsets: ["latin"] });
+import type { Metadata, Viewport } from "next";
 
 const APP_TITLE = "Pattern Projector";
 const APP_DESCRIPTION =
@@ -16,8 +13,6 @@ const APP_URL = "https://www.patternprojector.com/";
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   description: "Calibrate your projector for sewing patterns",
-  viewport:
-    "width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no",
   applicationName: APP_TITLE,
   title: APP_TITLE,
   manifest: "/manifest.json",
@@ -42,22 +37,30 @@ export const metadata: Metadata = {
     title: APP_TITLE,
     description: APP_DESCRIPTION,
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  minimumScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: "#000",
 };
 
-export default function LocaleLayout({
+export default async function LocaleLayout({
   children,
-  params: { locale },
+  params,
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  const messages = useMessages();
+  const { locale } = await params;
+  const messages = await getMessages({ locale });
 
   return (
     <html lang={locale}>
       <body
-        className={inter.className}
         style={{
           overscrollBehavior: "none",
           overflow: "hidden",
@@ -69,7 +72,6 @@ export default function LocaleLayout({
           {children}
         </NextIntlClientProvider>
       </body>
-      <GoogleAnalytics gaId="G-JP1MLBQSKC" />
     </html>
   );
 }

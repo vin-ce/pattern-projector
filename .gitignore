@@ -55,3 +55,13 @@ next-env.d.ts
 /public/worker-*.js.map
 /public/fallback-*.js/
 public/swe-worker-*.js*
+
+# Local geometry service
+.venv/
+.runtime/
+__pycache__/
+.pytest_cache/
+*.pyc
+/public/pdf/
+
+/.venv

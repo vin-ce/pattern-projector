@@ -1,76 +1,68 @@
-**A quick note about what's next:** I've been working on a complete rewrite of PP since April. I was really inspired by some community work on PP and wanted to build those features in, but I kept fighting my poor architectural choices, so I decided to start fresh.
+# Pattern Projector — Sewing & Muslin Fork
 
-It's in a private repo for now while I have fun rebuilding things and adding in a bunch of wishlist features, but it will be open source when it launches. In the meantime, I'm keeping this version stable with just bug fixes, so new feature PRs are on hold.
+A local fork of [Pattern Projector](https://github.com/Pattern-Projector/pattern-projector), with a Python geometry engine for size-specific sewing lines and extra muslin cutting allowance. Upstream calibration, perspective correction, movement, rotation, mirroring, measuring, layer selection, and page stitching remain the projection foundation.
 
-# Welcome to Pattern Projector!
+The original Pattern Studio implementation is preserved separately. Its PDF and geometry engine now lives in `services/engine`; the new React feature lives in `app/_features/linework`. The upstream MIT license and copyright are retained.
 
-Pattern projector is a free and open source web app that helps users quickly calibrate projectors for sewing patterns. This project is currently in beta, so expect large changes and new features to be added as we iterate.
+## Open on this Mac
 
-## What You’ll Need
+Double-click **Pattern Projector.app** on the Desktop. It starts the web app and local geometry engine and opens **http://127.0.0.1:3000/en/calibrate**. Clicking again reuses the running app. No terminal is needed for normal use. The installed launcher points to this checkout, so keep this folder in place or reinstall the launcher after moving it.
 
-- Projector: at least 720p recommended
-- Cutting mat: ideally with grid lines at every inch
-- Tripod or wall/shelf/table mount for projector
-- Computer or tablet to connect to the projector
-- A PDF sewing pattern
+To reinstall the desktop icon:
 
-## Setup
+```sh
+node scripts/install-desktop-launcher.mjs
+```
 
-Place the projector above the cutting mat, pointing at the cutting mat. Try to place the projector directly above the cutting mat and pointing directly at it.
+To stop servers started by that launcher:
 
-Connect your computer or tablet to the projector and either mirror or extend the display.
+```sh
+node scripts/launch.mjs --stop
+```
 
-Adjust the focus on the projector, until text is crisp in the centre of the projection. If you cannot get a clear image, ensure the distance between the projector and cutting mat is within the functional range recommended by the manufacturer.
+Startup logs are in `.runtime/launcher.log`. The launcher uses a production build when available and development mode otherwise. The Python interpreter must be available in `.venv` or `PATTERN_STUDIO_PYTHON`.
 
-If your projector has a keystone, adjust it so that projection is close to rectangular and focus near the edges improves.
+## Sewing and muslin workflow
 
-## Calibration
+1. Calibrate the projector using the original Pattern Projector controls, then choose **Project** and open the PDF.
+2. Open **SEWING / MUSLIN** on the right. Select a size. Non-size notches, grainlines, text, and control lines remain present.
+3. Set the original seam allowance and the desired muslin allowance. Source suggestions are used when detected. Inputs accept decimals, fractions (`3/8`), and mixed fractions (`1 1/2`).
+4. A `3/8″` original allowance and `1″` muslin allowance place the sewing line `3/8″` inward and the muslin cut `5/8″` outside the original cut along ordinary seams. Hems and confirmed fold edges have separate rules.
+5. Review open boundaries and inferred fold/closing edges. Confirm only edges you have checked against the source, or explicitly accept a partial result. Unconfirmed pieces retain their original markings but receive no generated lines.
+6. Click **GENERATE + PROJECT**. A derived vector PDF replaces the display inside the original projection pipeline. The source file is never overwritten. Use **Restore original** to return to native layers, or **Download PDF** to save the prepared version.
 
-Open “Calibration”.
+The review page arrows appear only for multi-page PDFs. Generation/export processes **all pages**, rather than silently exporting just the review page. The engine refuses incomplete results unless partial generation was explicitly enabled.
 
-Enter the width and height of your mat into the page.
+PDF reference-square measurements and optional PDF correction are separate from projector/mat calibration. Corrections apply before offsets, so requested allowances stay in physical units. Keep the upstream Pattern Scale at `1.00` when using generated linework; changing it restores the original view rather than stretching generated allowances. Actual physical projection still needs to be measured on your cutting surface.
 
-Enter fullscreen mode by clicking (or tapping) “Fullscreen”
+## Local setup on another Mac
 
-Drag the corners of the grid to align with your mat. With your eyes on the mat, adjust the corners on the tablet or computer.
-Adjust the placement of the corners until the projected grid matches your mat’s grid.
+Use Node.js 20.19+ (Node 22 or 24 works) and Python 3.12 with Clipper2 wheels.
 
-When the projected grid is aligned with your mat, click (or tap) “Project Pattern”
+```sh
+CYPRESS_INSTALL_BINARY=0 node .yarn/releases/yarn-1.22.21.cjs install
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -e 'services/engine[test]'
+node scripts/dev.mjs
+```
 
-## Projecting a Pattern
+The web app binds to loopback port `3000`, and the engine to loopback port `8000`. PDFs go only to that local engine. Files and workspace data in `.runtime/` are ignored by Git. Input Mono is loaded from the installed local font; no font binaries are redistributed. Upstream Google Analytics has been removed from this local fork.
 
-Click (or tap) “Open File” to load the PDF document.
+## Development
 
-Cut along the projected design.
+```sh
+yarn check
+yarn test:unit --runInBand --coverage=false
+yarn test:engine
+yarn build
+yarn generate:api
+```
 
-In projection mode there are several tools provided:
+`generate:api` derives TypeScript types from the engine's OpenAPI schema. Keep the frontend contract generated rather than copying model definitions by hand. The build does not run a repository-wide formatter.
 
-- Drag to move: Move the PDF by dragging it around the screen.
+- [Fork architecture and upstream maintenance](docs/fork-architecture.md)
+- [Geometry accuracy and limitations](docs/linework-accuracy.md)
+- [Original upstream README](docs/upstream-readme.md)
+- [Original upstream contribution guide](CONTRIBUTING.md)
 
-- Invert Colours: When projecting, it’s usually easier to see white lines on black. Click “invert” to invert the colours.
-
-- Flip Vertical/Horizontal: helpful to unwrap fold lines in patterns
-
-- Rotate: to change the orientation of the pattern
-
-- Fullscreen: It’s generally easier to use the software in fullscreen mode, tap or click “Fullscreen”
-
-## FAQ
-
-Annotation Support: planned for upcoming release.
-Chromecast/Miracast: While it’s possible to cast this webpage, the lag in the connection can be frustrating, especially when calibrating.
-Phones: While possible to visit and use the webpage on a Phone, the limited screen size makes it difficult to use.
-
-## Translations
-
-Pattern Projector uses [Weblate](https://hosted.weblate.org/projects/pattern-projector/pattern-projector/) for translations.
-
-<a href="https://hosted.weblate.org/engage/pattern-projector/">
-<img src="https://hosted.weblate.org/widget/pattern-projector/horizontal-auto.svg" alt="Translation status" />
-</a>
-
-## Contributing
-
-[Learn how to set up your local development environment for contributing to Pattern Projector.](/CONTRIBUTING.md)
-
-Feedback, code contributions, translations, and feature requests are welcome!
+The upstream maintainer has announced a separate rewrite; this public branch is in maintenance mode. This fork intentionally keeps its linework feature isolated so it can be ported if the rewrite becomes available. No feature PR is being submitted to upstream while its feature contributions are paused.

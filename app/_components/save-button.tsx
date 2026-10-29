@@ -21,7 +21,9 @@ export default function SaveButton({
     if (file === null) return;
 
     function saveFileSuccess(pdfBytes: Uint8Array) {
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([Uint8Array.from(pdfBytes).buffer], {
+        type: "application/pdf",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

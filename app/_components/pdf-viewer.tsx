@@ -1,5 +1,5 @@
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
 import {
   Dispatch,
@@ -26,11 +26,14 @@ import { LoadStatusEnum } from "@/_lib/load-status-enum";
 import { Point } from "@/_lib/point";
 import { useTranslations } from "next-intl";
 import { MenuStates, getDefaultMenuStates } from "@/_lib/menu-states";
+import { escapeHtml } from "@/_lib/escape-html";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.js",
+  "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url,
 ).toString();
+
+const documentOptions = { isEvalSupported: false };
 
 export default function PdfViewer({
   file,
@@ -101,9 +104,8 @@ export default function PdfViewer({
   }
 
   function onPageLoadSuccess(pdfProxy: PDFPageProxy) {
-    const scale = (pdfProxy.userUnit || 1) * PDF_TO_CSS_UNITS;
-    const width = pdfProxy.view[2] * scale;
-    const height = pdfProxy.view[3] * scale;
+    const viewport = pdfProxy.getViewport({ scale: PDF_TO_CSS_UNITS });
+    const { width, height } = viewport;
     setPageSize({
       action: "setPage",
       pageNumber: pdfProxy.pageNumber,
@@ -115,13 +117,13 @@ export default function PdfViewer({
     }
   }
 
-  function onPageRenderSuccess() {
+  const onPageRenderSuccess = useCallback(() => {
     setFileLoadStatus(LoadStatusEnum.SUCCESS);
     setLineThicknessStatus(LoadStatusEnum.SUCCESS);
-  }
+  }, [setFileLoadStatus, setLineThicknessStatus]);
 
   const customTextRenderer = useCallback(({ str }: { str: string }) => {
-    return `<span class="opacity-0 hover:opacity-100 hover:text-6xl" style="background-color: #FFF; color: #000;">${str}</span>`;
+    return `<span class="opacity-0 hover:opacity-100 hover:text-6xl" style="background-color: #FFF; color: #000;">${escapeHtml(str)}</span>`;
   }, []);
 
   useEffect(() => {
@@ -169,6 +171,7 @@ export default function PdfViewer({
   return (
     <Document
       file={file}
+      options={documentOptions}
       onLoadSuccess={onDocumentLoadSuccess}
       noData={<p className="text-9xl">{t("noData")}</p>}
       error={<p className="text-9xl">{t("error")}</p>}

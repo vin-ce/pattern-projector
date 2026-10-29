@@ -28,3 +28,212 @@
 .annotationLayer a {
   display: none !important;
 }
+
+@font-face {
+  font-family: "Input Mono";
+  src: local("Input Mono Regular"), local("InputMono-Regular"),
+    local("Input Mono");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Input Mono";
+  src: local("Input Mono Medium"), local("InputMono-Medium");
+  font-weight: 500 700;
+  font-display: swap;
+}
+body,
+button,
+input,
+select {
+  font-family: "Input Mono", monospace;
+}
+button,
+select,
+input,
+[role="dialog"] {
+  border-radius: 0 !important;
+}
+input[type="checkbox"] {
+  accent-color: currentColor;
+}
+.linework-controls {
+  position: absolute;
+  right: 12px;
+  top: 76px;
+  z-index: 80;
+  pointer-events: auto;
+}
+.linework-toggle {
+  display: block;
+  margin-left: auto;
+  border: 1px solid currentColor;
+  background: white;
+  color: #111;
+  padding: 10px 14px;
+  font-size: 11px;
+}
+.linework-panel {
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 132px);
+  overflow-y: auto;
+  margin-top: 8px;
+  background: white;
+  color: #161616;
+  border: 1px solid #161616;
+  padding: 18px;
+  font-size: 12px;
+  line-height: 1.6;
+  scrollbar-width: thin;
+}
+.linework-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  gap: 10px;
+}
+.linework-heading h2 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.linework-heading button {
+  font-size: 24px;
+  line-height: 1;
+  padding: 0 4px;
+}
+.linework-filename {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  color: #666;
+  margin-bottom: 12px;
+}
+.linework-panel fieldset,
+.linework-panel details {
+  margin: 16px 0;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+}
+.linework-panel legend,
+.linework-panel summary {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+.linework-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0;
+}
+.linework-field input,
+.linework-field select {
+  border: 1px solid #999;
+  background: white;
+  color: black;
+  width: 125px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.linework-field input {
+  width: 88px;
+}
+.linework-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 10px 0;
+  font-size: 11px;
+}
+.linework-check input {
+  margin-top: 4px;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+.linework-help {
+  font-size: 10px;
+  color: #666;
+  margin: 8px 0;
+}
+.linework-sample {
+  width: 22px;
+  flex-shrink: 0;
+  margin-top: 8px;
+  border-top: 1px solid #111;
+}
+.linework-sample.sewing {
+  border-top-style: dashed;
+}
+.linework-sample.original {
+  border-color: #999;
+}
+.linework-message {
+  border-left: 2px solid #111;
+  padding-left: 10px;
+  margin: 12px 0;
+  font-size: 11px;
+}
+.linework-primary {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: #111;
+  color: white;
+  border: 1px solid #111;
+  font-size: 11px;
+  margin-top: 16px;
+}
+.linework-panel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+.linework-panel button:focus-visible,
+.linework-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.linework-panel button:not(.linework-primary):not(:disabled):hover {
+  background: #eee;
+}
+.linework-actions,
+.linework-pages {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.linework-actions button,
+.linework-pages button,
+.linework-piece button,
+.linework-message button {
+  border: 1px solid #aaa;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+.linework-piece {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 7px 10px;
+  border-bottom: 1px solid #ddd;
+  padding: 12px 0;
+}
+.linework-piece svg {
+  width: 65px;
+  height: 90px;
+  grid-row: span 3;
+}
+.linework-piece strong,
+.linework-piece span {
+  font-size: 10px;
+}
+.linework-piece p,
+.linework-piece button {
+  grid-column: 1 / -1;
+}
