@@ -99,6 +99,7 @@ export default function CustomRenderer() {
       return;
     }
     const renderContext: RenderParameters = {
+      canvas: canvas as HTMLCanvasElement,
       canvasContext: ctx as any,
       viewport: renderViewport,
       optionalContentConfigPromise: pdf
@@ -151,6 +152,7 @@ export default function CustomRenderer() {
     renderErosions,
     renderWidth,
     renderHeight,
+    onPageRenderSuccess,
   ]);
 
   return (
@@ -161,13 +163,9 @@ export default function CustomRenderer() {
       height={renderHeight}
       style={{
         width:
-          Math.floor(
-            viewport.width * PDF_TO_CSS_UNITS * userUnit * patternScale,
-          ) + "px",
+          Math.floor(viewport.width * PDF_TO_CSS_UNITS * patternScale) + "px",
         height:
-          Math.floor(
-            viewport.height * PDF_TO_CSS_UNITS * userUnit * patternScale,
-          ) + "px",
+          Math.floor(viewport.height * PDF_TO_CSS_UNITS * patternScale) + "px",
       }}
     />
   );
@@ -180,7 +178,7 @@ function getScale(
   patternScale: number,
 ): number {
   const dpr = window.devicePixelRatio;
-  const dpi = dpr * userUnit * PDF_TO_CSS_UNITS * patternScale;
+  const dpi = dpr * PDF_TO_CSS_UNITS * patternScale;
   const renderArea = dpi * w * dpi * h;
   const maxArea = 16_777_216; // limit for iOS or Android device canvas size https://jhildenbiddle.github.io/canvas-size/#/?id=test-results
   let scale = dpi;

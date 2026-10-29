@@ -49,21 +49,15 @@ function trimmedPageSize(
 }
 
 function initDoc(doc: PDFDocument, pages: number[]): Map<number, PDFRef> {
-  /**
-   * Creates a list of page numbers and references, then removes the pages from the document.
-   */
-
-  const pageMap = new Map<number, PDFRef>();
-  for (const p of pages.filter((p) => p > 0)) {
-    pageMap.set(p, doc.getPage(p - 1).ref);
+  // Newer pdf-lib removes a page's indirect object when detaching it. Build
+  // the vector form references first, while the source pages are still valid.
+  const forms = new Map<number, PDFRef>();
+  for (const p of new Set(pages.filter((p) => p > 0))) {
+    const form = getFormXObjectForPage(doc.context, doc.getPage(p - 1).ref);
+    if (form) forms.set(p, form); // An empty page deliberately has no paint.
   }
-
-  // Remove all the pages
-  while (doc.getPageCount() > 0) {
-    doc.removePage(0);
-  }
-
-  return pageMap;
+  while (doc.getPageCount() > 0) doc.removePage(0);
+  return forms;
 }
 
 function mergeStreams(
@@ -205,7 +199,7 @@ async function tilePages(doc: PDFDocument, settings: StitchSettings) {
   const outHeight = pageSize.height * rows;
 
   // Modify the document to remove the pages but keep the objects
-  const pageMap = initDoc(doc, pages);
+  const formMap = initDoc(doc, pages);
 
   // Create a new page to hold the stitched pages
   // Add at least a 1" margin because of weirdness.
@@ -227,14 +221,8 @@ async function tilePages(doc: PDFDocument, settings: StitchSettings) {
   const XObjectDict = doc.context.obj({});
 
   for (const p of pages) {
-    const ref = pageMap.get(p);
-    if (ref) {
-      // create a new form XObject for the page
-      const xRef = await getFormXObjectForPage(doc.context, ref);
-      if (!xRef) {
-        throw new Error(`Failed to create form XObject for page ${p}`);
-      }
-
+    const xRef = formMap.get(p);
+    if (xRef) {
       const pageName = `Page${p}`;
 
       // Add commands to the content stream to draw the form

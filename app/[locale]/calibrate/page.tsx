@@ -45,7 +45,10 @@ import CalibrationContext, {
   logCalibrationContextDifferences,
 } from "@/_lib/calibration-context";
 import WarningIcon from "@/_icons/warning-icon";
-import PdfViewer from "@/_components/pdf-viewer";
+import dynamic from "next/dynamic";
+const PdfViewer = dynamic(() => import("@/_components/pdf-viewer"), {
+  ssr: false,
+});
 import { Transformable } from "@/_hooks/use-transform-context";
 import OverlayCanvas from "@/_components/canvases/overlay-canvas";
 import stitchSettingsReducer from "@/_reducers/stitchSettingsReducer";
@@ -75,6 +78,8 @@ import { Button } from "@/_components/buttons/button";
 import { erosionFilter } from "@/_lib/erode";
 import SvgViewer from "@/_components/svg-viewer";
 import { toggleFullScreen } from "@/_lib/full-screen";
+import { useLinework } from "@/_features/linework/hooks/use-linework";
+import { LineworkPanel } from "@/_features/linework/components/LineworkPanel";
 
 const defaultStitchSettings = {
   lineCount: 1,
@@ -109,6 +114,11 @@ export default function Page() {
     useState<LoadStatusEnum>(LoadStatusEnum.DEFAULT);
   const [perspective, setPerspective] = useState<Matrix>(Matrix.identity(3, 3));
   const [file, setFile] = useState<File | null>(null);
+  const linework = useLinework(file);
+  const { projectionFile: preparedProjection, restore: restoreOriginal } =
+    linework;
+  const projectionFile = preparedProjection ?? file;
+  const [lineworkOpen, setLineworkOpen] = useState(false);
   const [calibrationTransform, setCalibrationTransform] = useState<Matrix>(
     Matrix.identity(3, 3),
   );
@@ -148,12 +158,51 @@ export default function Page() {
     (l: Layers) => dispatchLayersAction({ type: "set-layers", layers: l }),
     [dispatchLayersAction],
   );
+  const appliedLineworkLayers = useRef("");
+  useEffect(() => {
+    if (
+      !linework.document ||
+      linework.projectionFile ||
+      !Object.keys(layers).length
+    )
+      return;
+    const key = JSON.stringify([
+      linework.document.id,
+      linework.size,
+      linework.hiddenLayers,
+      Object.keys(layers),
+    ]);
+    if (key === appliedLineworkLayers.current) return;
+    appliedLineworkLayers.current = key;
+    const visibleLayers = new Set(
+      Object.entries(layers)
+        .filter(([, layer]) =>
+          linework.document!.sizes.includes(layer.name)
+            ? layer.name === linework.size
+            : !linework.hiddenLayers.includes(layer.name),
+        )
+        .map(([name]) => name),
+    );
+    dispatchLayersAction({ type: "update-visibility", visibleLayers });
+  }, [
+    linework.document,
+    linework.size,
+    linework.hiddenLayers,
+    linework.projectionFile,
+    layers,
+    dispatchLayersAction,
+  ]);
+
   const [patternScale, dispatchPatternScaleAction] = useReducer(
     PatternScaleReducer,
     "1.00",
   );
   const patternScaleFactor =
     Number(patternScale) === 0 ? 1 : Number(patternScale);
+
+  useEffect(() => {
+    if (preparedProjection && patternScaleFactor !== 1) restoreOriginal();
+  }, [patternScaleFactor, preparedProjection, restoreOriginal]);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -388,9 +437,9 @@ export default function Page() {
   // Allow the user to open the file from their file browser, e.g., "Open With"
   useEffect(() => {
     requestWakeLock();
-    if ("launchQueue" in window) {
+    if (window.launchQueue) {
       window.launchQueue.setConsumer(
-        async (launchParams: { files: [FileSystemHandle] }) => {
+        async (launchParams: { files: FileSystemHandle[] }) => {
           for (const handle of launchParams.files) {
             if (handle.kind == "file") {
               const file = await (handle as FileSystemFileHandle).getFile();
@@ -483,12 +532,13 @@ export default function Page() {
   useEffect(() => {
     setMenusHidden(
       isIdle &&
+        !lineworkOpen &&
         !isCalibrating &&
         !zoomedOut &&
         file !== null &&
         fileLoadStatus !== LoadStatusEnum.LOADING,
     );
-  }, [isIdle, isCalibrating, zoomedOut, file, fileLoadStatus]);
+  }, [isIdle, isCalibrating, zoomedOut, file, fileLoadStatus, lineworkOpen]);
 
   // Continually check the calibration context because the user could change the viewport size at any time and ruin their calibration
   useEffect(() => {
@@ -586,6 +636,25 @@ export default function Page() {
             />
           )}
 
+          {!isCalibrating && file?.name.toLowerCase().endsWith(".pdf") && (
+            <div className={`linework-controls ${menusHidden ? "hidden" : ""}`}>
+              <button
+                className="linework-toggle"
+                aria-expanded={lineworkOpen}
+                onClick={() => setLineworkOpen((old) => !old)}
+              >
+                SEWING / MUSLIN{linework.pendingChanges ? " *" : ""}
+              </button>
+              {lineworkOpen && (
+                <LineworkPanel
+                  controller={linework}
+                  patternScale={patternScaleFactor}
+                  onClose={() => setLineworkOpen(false)}
+                />
+              )}
+            </div>
+          )}
+
           <Transformable fileName={file?.name ?? "default"}>
             <MeasureCanvas
               className={visible(!isCalibrating)}
@@ -631,7 +700,7 @@ export default function Page() {
               >
                 {file === null || file.type === "application/pdf" ? (
                   <PdfViewer
-                    file={file}
+                    file={projectionFile}
                     setPageCount={setPageCount}
                     pageCount={pageCount}
                     setLayers={setLayers}
@@ -753,7 +822,7 @@ export default function Page() {
                   mailOpen={mailOpen}
                   setMailOpen={setMailOpen}
                   invalidCalibration={checkIsConcave(points)}
-                  file={file}
+                  file={projectionFile}
                 />
                 {isCalibrating && menuStates.nav && (
                   <TroubleshootingButton
@@ -770,7 +839,7 @@ export default function Page() {
                   pageCount={pageCount}
                   layers={layers}
                   dispatchLayersAction={dispatchLayersAction}
-                  file={file}
+                  file={projectionFile}
                   stitchSettings={stitchSettings}
                   dispatchStitchSettings={dispatchStitchSettings}
                   patternScale={patternScale}

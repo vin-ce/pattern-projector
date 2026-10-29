@@ -1,3 +1,4 @@
+import { expect, test } from "@jest/globals";
 import { getPerspectiveTransform, toMatrix3d } from "@/_lib/geometry";
 
 // opencv-python input and output
@@ -29,7 +30,7 @@ test("gets perspective transform with the same inputs and outputs as opencv-pyth
     -1.6296901e3, 1.60734029e-4, 1.73337133e-4, 1.0,
   ];
 
-  const matrix = getPerspectiveTransform(src, dst);
+  const matrix = getPerspectiveTransform(src, dst).to1DArray();
 
   for (let i = 0; i < matrix.length; i++) {
     expect(matrix[i]).toBeCloseTo(openCVMatrix[i]);
@@ -55,7 +56,10 @@ test("coverts 3x3 matrix to 4x4 matrix", () => {
     0, -204.72045347183263, -1629.6900958816486, 0, 1,
   ];
 
-  const matrix = toMatrix3d(src, dst);
+  const matrix = toMatrix3d(getPerspectiveTransform(src, dst))
+    .slice(9, -1)
+    .split(",")
+    .map(Number);
 
   for (let i = 0; i < matrix.length; i++) {
     expect(matrix[i]).toBeCloseTo(openCVMatrix[i]);
